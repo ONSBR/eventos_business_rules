@@ -4,6 +4,24 @@ const ESTADOS_OPERATIVOS_DESLIGADO_EXCETO_DCO = ['DEM', 'DUR', 'DAU', 'DCA', 'DP
 
 class EventoMudancaEstadoOperativoBusiness {
 
+
+    aplicarRegras(eventos) {
+        this.preencherCampoDisponibilidadeVazio(eventos);
+        this.refletirAlteracaoDeUltimoEventoEmEventoespelho(eventos);
+        this.refletirAlteracoesQuandoUltimoEventoMesExcluido(eventos);
+        this.excluirEventosConsecutivosSemelhantes(eventos);
+        this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
+        this.verificarEventoDCOAposLig(eventos);
+        this.verificarPotenciaNegativaOuSuperiorPotencia(eventos);
+        this.verificarCondicaoOperativa(eventos);
+        this.verificarClassificacaoOrigem(eventos);
+        this.verificarCondicaoOperacaoOperativaRPROuRFO(eventos);
+        this.verificarEstadoOperativoDesligamento(eventos);
+        this.verificarTempoLimiteFranquiaGIC(eventos);
+        this.verificarEventosNaMesmaDataHora(eventos);
+        this.verificarEventosConsecutivos(eventos);
+    }
+
     /**
      * RNI080 - Entrada em Operação Comercial de um equipamento. 
      * É obrigatória a existência de um, e somente um, evento com o estado operativo EOC para 
@@ -50,16 +68,21 @@ class EventoMudancaEstadoOperativoBusiness {
      * @param {EventoMudancaEstadoOperativo} evento - Evento de mudança de estado operativo.
      */
     preencherCampoDisponibilidadeVazio(evento, uge) {
-        if (!evento.potenciaDisponivel) {
-
+        if (!evento.potenciaDisponivel && !this.isEventoExclusao(evento)) {
             const NOR_NOT_TST = ['NOR', 'NOT', 'TST'];
             if (NOR_NOT_TST.includes(evento.idCondicaoOperativa)) {
                 evento.potenciaDisponivel = uge.potenciaDisponivel;
+                this.preencherOperacaoParaAtualizacao(evento);
             } else if (ESTADOS_OPERATIVOS_DESLIGADO_EXCETO_DCO.includes(evento.idEstadoOperativo)) {
                 evento.potenciaDisponivel = 0;
-            } else {
-                evento.potenciaDisponivel = uge.potenciaDisponivel;
-            }
+                this.preencherOperacaoParaAtualizacao(evento);
+            } 
+        }
+    }
+
+    preencherOperacaoParaAtualizacao(evento) {
+        if(!evento.operacao) {
+            evento.operacao = 'A';
         }
     }
 
@@ -112,6 +135,7 @@ class EventoMudancaEstadoOperativoBusiness {
                 eventos[i].idEstadoOperativo = eventoAlterado.idEstadoOperativo;
                 eventos[i].idCondicaoOperativa = eventoAlterado.idCondicaoOperativa;
                 eventos[i].potenciaDisponivel = eventoAlterado.potenciaDisponivel;
+                eventos[i].operacao = 'A';
             }
         }
     }
@@ -145,7 +169,7 @@ class EventoMudancaEstadoOperativoBusiness {
     }
 
     isEventoExclusao(evento) {
-        return evento.operacao != undefined && evento.operacao == 'E';
+        return evento.operacao == 'E';
     }
 
     /**
