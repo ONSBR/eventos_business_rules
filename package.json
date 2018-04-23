@@ -1,0 +1,14 @@
+{
+  "name": "common_business",
+  "version": "1.0.0",
+  "description": "Projeto com as regras de negócios comuns aos UCs UC-00602 e UC-00606.",
+  "scripts": {
+    "test": "nyc jasmine"
+  },
+  "dependencies": {
+    "jasmine": "^2.9.0",
+    "moment": "^2.20.1"
+  },
+  "author": "",
+  "license": "ISC"
+}
