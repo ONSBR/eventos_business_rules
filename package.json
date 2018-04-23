@@ -1,6 +1,10 @@
 {
   "name": "common_business",
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ONSBR/eventos_business_rules.git"
+  },
   "description": "Projeto com as regras de negócios comuns aos UCs UC-00602 e UC-00606.",
   "scripts": {
     "test": "nyc jasmine"
