@@ -135,7 +135,7 @@ class EventoMudancaEstadoOperativoBusiness {
                 eventos[i].idEstadoOperativo = eventoAlterado.idEstadoOperativo;
                 eventos[i].idCondicaoOperativa = eventoAlterado.idCondicaoOperativa;
                 eventos[i].potenciaDisponivel = eventoAlterado.potenciaDisponivel;
-                eventos[i].operacao = 'A';
+                eventos[i].operacao = 'AA';
             }
         }
     }
@@ -147,7 +147,7 @@ class EventoMudancaEstadoOperativoBusiness {
     }
 
     isEventoAlteracao(evento) {
-        return evento.operacao != undefined && evento.operacao == 'A';
+        return evento.operacao == 'A';
     }
 
     isUltimoEventoMes(evento, eventoPosterior) {
