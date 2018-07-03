@@ -22,6 +22,16 @@ class EventoMudancaEstadoOperativoBusiness {
         this.verificarEventosConsecutivos(eventos);
     }
 
+    aplicarRegrasCenario(eventos){
+        this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
+        this.excluirEventosConsecutivosSemelhantes(eventos); 
+        this.verificarLimite960HorasEventoGIC(eventos);
+        this.verificarTempoLimiteFranquiaGIC(eventos);
+        this.verificarRestricaoTempoUtilizacaoFranquiaGIM(eventos);
+        
+        this.excluirEventosConsecutivosSemelhantes(eventos);
+    }
+
     /**
      * RNI080 - Entrada em Operação Comercial de um equipamento. 
      * É obrigatória a existência de um, e somente um, evento com o estado operativo EOC para 
@@ -436,6 +446,14 @@ class EventoMudancaEstadoOperativoBusiness {
                     ' com os mesmos valores de Estado Operativo, Condição Operativa, Origem e Disponibilidade, exceto no caso do evento espelho.');
             }
         }
+    }
+
+    /**
+     * RNR081 - Restrição para dois eventos consecutivos de mudança de estado operativo.
+     * @param {EventoMudancaEstadoOperativo[]} eventos 
+     */
+    verificarRestricaoTempoUtilizacaoFranquiaGMT(eventos) {
+
     }
 
     compararEventosConsecutivos(eventoAnterior, evento) {
