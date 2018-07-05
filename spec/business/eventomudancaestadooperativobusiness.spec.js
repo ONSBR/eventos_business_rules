@@ -4,22 +4,28 @@ describe('EventoMudancaEstadoOperativoBusiness deve:', function () {
     let eventoMudancaEstadoOperativoBusiness = new EventoMudancaEstadoOperativoBusiness();
 
     it('Validar a existência de um evento de Entrada Em Operação comercial(EOC):', () => {
-        let eventosComUmEOC = [{ idEstadoOperativo: 'EOC', dataVerificadaEmSegundos: 100 },
-        { idEstadoOperativo: 'LIG', dataVerificadaEmSegundos: 100 },
-        { idEstadoOperativo: 'LIG', dataVerificadaEmSegundos: 200 },
-        { idEstadoOperativo: 'LCC', dataVerificadaEmSegundos: 300 }];
+
+        let dataJaneiro = new Date(2018, 0 , 1);
+        let dataFevereiro = new Date(2018, 1 , 1);
+        let dataMarco = new Date(2018, 2 , 1);
+        let dataAbril = new Date(2018, 3 , 1);
+
+        let eventosComUmEOC = [{ idEstadoOperativo: 'EOC', dataVerificada: dataJaneiro },
+            { idEstadoOperativo: 'LIG', dataVerificada: dataJaneiro },
+            { idEstadoOperativo: 'LIG', dataVerificada: dataFevereiro },
+            { idEstadoOperativo: 'LCC', dataVerificada: dataMarco }];
         eventoMudancaEstadoOperativoBusiness.verificarUnicidadeEventoEntradaOperacaoComercial(eventosComUmEOC);
 
-        let eventosComUmEOC2 = [{ idEstadoOperativo: 'DCA', dataVerificadaEmSegundos: 100 },
-        { idEstadoOperativo: 'EOC', dataVerificadaEmSegundos: 200 },
-        { idEstadoOperativo: 'LIG', dataVerificadaEmSegundos: 200 },
-        { idEstadoOperativo: 'LCC', dataVerificadaEmSegundos: 300 }];
+        let eventosComUmEOC2 = [{ idEstadoOperativo: 'DCA', dataVerificada: dataJaneiro },
+            { idEstadoOperativo: 'EOC', dataVerificada: dataFevereiro },
+            { idEstadoOperativo: 'LIG', dataVerificada: dataFevereiro },
+            { idEstadoOperativo: 'LCC', dataVerificada: dataMarco }];
         eventoMudancaEstadoOperativoBusiness.verificarUnicidadeEventoEntradaOperacaoComercial(eventosComUmEOC2);
 
-        let eventosComDoisEOC = [{ idEstadoOperativo: 'DCA', dataVerificadaEmSegundos: 100 },
-        { idEstadoOperativo: 'EOC', dataVerificadaEmSegundos: 200 },
-        { idEstadoOperativo: 'EOC', dataVerificadaEmSegundos: 200 },
-        { idEstadoOperativo: 'LCC', dataVerificadaEmSegundos: 300 }];
+        let eventosComDoisEOC = [{ idEstadoOperativo: 'DCA', dataVerificada: dataJaneiro },
+            { idEstadoOperativo: 'EOC', dataVerificada: dataFevereiro },
+            { idEstadoOperativo: 'EOC', dataVerificada: dataFevereiro },
+            { idEstadoOperativo: 'LCC', dataVerificada: dataMarco }];
 
         expect(
             () => {
@@ -27,10 +33,10 @@ describe('EventoMudancaEstadoOperativoBusiness deve:', function () {
             }
         ).toThrowError('É obrigatória a existência de um, e somente um, evento com o estado operativo EOC.');
 
-        let eventosComUmEOCESemEventoSimultaneo = [{ idEstadoOperativo: 'DCA', dataVerificadaEmSegundos: 100 },
-        { idEstadoOperativo: 'EOC', dataVerificadaEmSegundos: 200 },
-        { idEstadoOperativo: 'LIG', dataVerificadaEmSegundos: 300 },
-        { idEstadoOperativo: 'LCC', dataVerificadaEmSegundos: 400 }];
+        let eventosComUmEOCESemEventoSimultaneo = [{ idEstadoOperativo: 'DCA', dataVerificada: dataJaneiro },
+        { idEstadoOperativo: 'EOC', dataVerificada: dataFevereiro },
+        { idEstadoOperativo: 'LIG', dataVerificada: dataMarco },
+        { idEstadoOperativo: 'LCC', dataVerificada: dataAbril }];
         expect(
             () => {
                 eventoMudancaEstadoOperativoBusiness.verificarUnicidadeEventoEntradaOperacaoComercial(eventosComUmEOCESemEventoSimultaneo);
@@ -52,7 +58,7 @@ describe('EventoMudancaEstadoOperativoBusiness deve:', function () {
         let eventosAlterados = [
             { idEstadoOperativo: 'DUR', idCondicaoOperativa: 'RPR', idClassificacaoOrigem: 'GUM', potenciaDisponivel: 500, dataVerificada: new Date(2017, 0, 30) },
             { idEstadoOperativo: 'DUR', idCondicaoOperativa: 'RPR', idClassificacaoOrigem: 'GUM', potenciaDisponivel: 400, dataVerificada: new Date(2017, 0, 31), operacao: 'E' },
-            { idEstadoOperativo: 'DUR', idCondicaoOperativa: 'RPR', idClassificacaoOrigem: 'GUM', potenciaDisponivel: 500, dataVerificada: new Date(2017, 1, 1, 0, 0), operacao: 'AA'},
+            { idEstadoOperativo: 'DUR', idCondicaoOperativa: 'RPR', idClassificacaoOrigem: 'GUM', potenciaDisponivel: 500, dataVerificada: new Date(2017, 1, 1, 0, 0), operacao: 'AA' },
             { idEstadoOperativo: 'DUR', idCondicaoOperativa: 'RPR', idClassificacaoOrigem: 'GUM', potenciaDisponivel: 500, dataVerificada: new Date(2017, 2, 1, 0, 0), operacao: 'AA' },
             { idEstadoOperativo: 'DUR', idCondicaoOperativa: 'RPR', idClassificacaoOrigem: 'GUM', potenciaDisponivel: 500, dataVerificada: new Date(2017, 3, 1, 0, 0), operacao: 'AA' },
             { idEstadoOperativo: 'LIG', idCondicaoOperativa: 'RPR', idClassificacaoOrigem: 'GGE', potenciaDisponivel: 300, dataVerificada: new Date(2017, 4, 1, 9, 0), operacao: 'I' },

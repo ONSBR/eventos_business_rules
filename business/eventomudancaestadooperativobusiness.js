@@ -39,28 +39,19 @@ class EventoMudancaEstadoOperativoBusiness {
      * @param {EventoMudancaEstadoOperativo[]} eventos - array de eventos.
      */
     verificarUnicidadeEventoEntradaOperacaoComercial(eventos) {
-        let countEventosEOC = 0;
-        let tempoEmSegundosEOC;
-        let encontrouEventoSimultaneoAoEOC = false;
-
-        eventos.forEach(evento => {
-            // FIXME constantes
-            if (this.isEventoEOC(evento)) {
-                countEventosEOC++;
-                tempoEmSegundosEOC = evento.dataVerificadaEmSegundos;
-            }
-
-            if (!this.isEventoEOC(evento) && tempoEmSegundosEOC != undefined &&
-                evento.dataVerificadaEmSegundos == tempoEmSegundosEOC) {
-                encontrouEventoSimultaneoAoEOC = true;
-            }
+        let eventosEOC = eventos.filter(evento => {
+            return this.isEventoEOC(evento);
         });
 
-        if (countEventosEOC != 1) {
+        if (eventosEOC.length != 1) {
             throw new Error('É obrigatória a existência de um, e somente um, evento com o estado operativo EOC.');
         }
 
-        if (!encontrouEventoSimultaneoAoEOC) {
+        let eventosSimultaneosEOC = eventos.filter(evento => {
+            return !this.isEventoEOC(evento) && evento.dataVerificada.getTotalSeconds() == eventosEOC[0].dataVerificada.getTotalSeconds();
+        });
+        
+        if (eventosSimultaneosEOC.length == 0) {
             throw new Error('Deve existir um evento com a mesma data/hora do evento EOC.');
         }
     }
@@ -425,7 +416,7 @@ class EventoMudancaEstadoOperativoBusiness {
         for (let i = 0; i < eventos.length; i++) {
             if (!this.isEventoEOC(eventos[i])) {
                 for (let j = i + 1; j < eventos.length; j++) {
-                    if (eventos[i].dataVerificadaEmSegundos == eventos[j].dataVerificadaEmSegundos) {
+                    if (eventos[i].dataVerificada.getTotalSeconds() == eventos[j].dataVerificada.getTotalSeconds()) {
                         throw new Error('Não podem existir dois ou mais eventos com a mesma Data/Hora Verificada e mesmo Estágio de Operação' +
                             ' (comissionamento ou operação comercial), exceto no caso de evento de Mudança de Estado Operativo com' +
                             ' Estado Operativo “EOC”.');
