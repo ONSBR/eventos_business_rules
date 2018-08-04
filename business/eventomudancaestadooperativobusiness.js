@@ -17,7 +17,6 @@ class EventoMudancaEstadoOperativoBusiness {
         this.verificarClassificacaoOrigem(eventos);
         this.verificarCondicaoOperacaoOperativaRPROuRFO(eventos);
         this.verificarEstadoOperativoDesligamento(eventos);
-        this.verificarTempoLimiteFranquiaGIC(eventos);
         this.verificarEventosNaMesmaDataHora(eventos);
         this.verificarEventosConsecutivos(eventos);
     }
@@ -25,11 +24,6 @@ class EventoMudancaEstadoOperativoBusiness {
     aplicarRegrasCenario(eventos){
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
         this.excluirEventosConsecutivosSemelhantes(eventos); 
-        this.verificarLimite960HorasEventoGIC(eventos);
-        this.verificarTempoLimiteFranquiaGIC(eventos);
-        this.verificarRestricaoTempoUtilizacaoFranquiaGIM(eventos);
-        
-        this.excluirEventosConsecutivosSemelhantes(eventos);
     }
 
     /**
@@ -195,98 +189,6 @@ class EventoMudancaEstadoOperativoBusiness {
     }
     
     /**
-     *  RNI207 - Tempo limite para utilização da  franquia GIC: Regra válida após 10/2014
-     *  Não pode haver registro de evento de Mudança de Estado Operativo com Origem “GIC” após 24 meses de operação comercial do Equipamento.
-     *  Regra válida antes de 10/2014:
-     *  Não pode haver registro de evento de Mudança de Estado Operativo com Origem “GIC” após 15000 horas de operação comercial do Equipamento (horas em serviço).
-     * @param {EventoMudancaEstadoOperativo[]} eventos 
-     */
-    verificarTempoLimiteFranquiaGIC(eventos) {
-        let dataVerificadaEOCApos24Meses;
-        let dataVerificadaEOCApos15000;
-        for (let i = 0; i < eventos.length; i++) {
-
-            if (eventos[i].idEstadoOperativo == 'EOC' && dataVerificadaEOCApos24Meses == undefined && dataVerificadaEOCApos15000 == undefined) {
-                dataVerificadaEOCApos24Meses = UtilCalculoParametro.adicionaMeses(eventos[i].dataVerificada, 24);
-                dataVerificadaEOCApos15000 = UtilCalculoParametro.adicionaHoras(eventos[i].dataVerificada, 15000);
-            }
-
-            if (UtilCalculoParametro.gte_10_2014(eventos[i])) {
-                if (this.isEventoGIC(eventos[i]) &&
-                    eventos[i].dataVerificada.getTotalSeconds() > dataVerificadaEOCApos24Meses.getTotalSeconds()) {
-                    throw new Error('Evento GIC após 24 meses do EOC.');
-                }
-            } else {
-                if (this.isEventoGIC(eventos[i]) &&
-                    eventos[i].dataVerificada.getTotalSeconds() > dataVerificadaEOCApos15000.getTotalSeconds()) {
-                    throw new Error('Evento GIC após 15000 horas do EOC.');
-                }
-            }
-        }
-    }
-
-    /**
-     * RNI208 - Valor de horas limite para utilização da franquia GIC: Regra desde 01/01/2001
-     * Não pode haver registro de evento com Origem “GIC” que ultrapasse o limite de 960 horas.
-     * @param {EventoMudancaEstadoOperativo[]} eventos
-     */
-    verificarLimite960HorasEventoGIC(eventos, existeFechamentoParaOMes) {
-        for (let i = 0; i < eventos.length; i++) {
-            if (this.isEventoGIC(eventos[i]) && UtilCalculoParametro.gte_01_01_2001(eventos[i])) {
-                for (let j = i + 1; j < eventos.length; j++) {
-                    if (!this.isEventoEspelho(eventos[j - 1], eventos[j])) {
-                        if (UtilCalculoParametro.calcularIntervaloEmHoras(eventos[i].dataVerificada, eventos[j].dataVerificada) > 960) {
-                            throw new Error('Não pode haver registro de evento com Origem “GIC” que ultrapasse o limite de 960 horas.');
-                        } else {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    isEventoGIC(evento) {
-        return evento.idClassificacaoOrigem == 'GIC';
-    }
-
-    /**
-     * RNI216 - Não pode haver registro de evento com Origem “GIM” antes do Equipamento completar 120 meses de entrada em operação comercial.
-     * Regra Válida após 01/10/14.
-     * RNI217- Não pode haver registro de evento com Origem “GIM” que ultrapasse o limite de 12 meses, 
-     * contados a partir de 120 meses da data de entrada em operação comercial
-     * @param {EventoMudancaEstadoOperativo[]} eventos
-     */
-    verificarRestricaoTempoUtilizacaoFranquiaGIM(eventos) {
-        let tempoEmSegundosEOC;
-        for (let i = 0; i < eventos.length; i++) {
-
-            if (UtilCalculoParametro.gte_10_2014(eventos[i])) {
-
-                if (this.isEventoEOC(eventos[i])) {
-                    tempoEmSegundosEOC = eventos[i].dataVerificada.getTotalSeconds();
-                }
-                if (this.isEventoGIM(eventos[i])) {
-                    let tempoEmSegundosGIM = eventos[i].dataVerificada.getTotalSeconds();
-                    UtilCalculoParametro.veficarTempoSuperior120Meses(tempoEmSegundosEOC, tempoEmSegundosGIM);
-
-                    if (eventos[i + 1] != undefined) {
-                        let tempoEmSegundosProximoEvento = eventos[i + 1].dataVerificada.getTotalSeconds();
-                        UtilCalculoParametro.veficarTempoInferior12Meses(tempoEmSegundosGIM, tempoEmSegundosProximoEvento);
-                    }
-
-                }
-
-            }
-
-        }
-    }
-
-    isEventoGIM(evento) {
-        return evento.idClassificacaoOrigem == 'GIM';
-    }
-
-    /**
      * RNR063 - Restrição ao COSR quanto a retificações/revisões diretas em eventos espelho:
      * Não são permitidas ao ator COSR retificações/revisões diretamente em eventos-espelho (evento zero-hora).
      * @param {EventoMudancaEstadoOperativo[]} eventos
@@ -437,14 +339,6 @@ class EventoMudancaEstadoOperativoBusiness {
                     ' com os mesmos valores de Estado Operativo, Condição Operativa, Origem e Disponibilidade, exceto no caso do evento espelho.');
             }
         }
-    }
-
-    /**
-     * RNR081 - Restrição para dois eventos consecutivos de mudança de estado operativo.
-     * @param {EventoMudancaEstadoOperativo[]} eventos 
-     */
-    verificarRestricaoTempoUtilizacaoFranquiaGMT(eventos) {
-
     }
 
     compararEventosConsecutivos(eventoAnterior, evento) {
