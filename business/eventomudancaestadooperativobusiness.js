@@ -5,20 +5,24 @@ const ESTADOS_OPERATIVOS_DESLIGADO_EXCETO_DCO = ['DEM', 'DUR', 'DAU', 'DCA', 'DP
 class EventoMudancaEstadoOperativoBusiness {
 
 
-    aplicarRegras(eventos) {
-        this.preencherCampoDisponibilidadeVazio(eventos);
-        this.refletirAlteracaoDeUltimoEventoEmEventoespelho(eventos);
-        this.refletirAlteracoesQuandoUltimoEventoMesExcluido(eventos);
-        this.excluirEventosConsecutivosSemelhantes(eventos);
+    aplicarRegrasPre(eventos) {
+        // this.preencherCampoDisponibilidadeVazio(eventos);
+        // this.refletirAlteracaoDeUltimoEventoEmEventoespelho(eventos);
+        // this.refletirAlteracoesQuandoUltimoEventoMesExcluido(eventos);
+        // this.excluirEventosConsecutivosSemelhantes(eventos);
+        // this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
+        // this.verificarEventoDCOAposLig(eventos);
+        // this.verificarPotenciaNegativaOuSuperiorPotencia(eventos);
+        // this.verificarCondicaoOperativa(eventos);
+        // this.verificarClassificacaoOrigem(eventos);
+        // this.verificarCondicaoOperacaoOperativaRPROuRFO(eventos);
+        // this.verificarEstadoOperativoDesligamento(eventos);
+        // this.verificarEventosNaMesmaDataHora(eventos);
+        // this.verificarEventosConsecutivos(eventos);
+    }
+
+    aplicarRegrasPos(eventos) {
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
-        this.verificarEventoDCOAposLig(eventos);
-        this.verificarPotenciaNegativaOuSuperiorPotencia(eventos);
-        this.verificarCondicaoOperativa(eventos);
-        this.verificarClassificacaoOrigem(eventos);
-        this.verificarCondicaoOperacaoOperativaRPROuRFO(eventos);
-        this.verificarEstadoOperativoDesligamento(eventos);
-        this.verificarEventosNaMesmaDataHora(eventos);
-        this.verificarEventosConsecutivos(eventos);
     }
 
     aplicarRegrasCenario(eventos){
@@ -130,7 +134,9 @@ class EventoMudancaEstadoOperativoBusiness {
                 eventos[i].idEstadoOperativo = eventoAlterado.idEstadoOperativo;
                 eventos[i].idCondicaoOperativa = eventoAlterado.idCondicaoOperativa;
                 eventos[i].potenciaDisponivel = eventoAlterado.potenciaDisponivel;
-                eventos[i].operacao = 'AA';
+                eventos[i].operacao = 'A';
+            } else {
+                break;
             }
         }
     }
