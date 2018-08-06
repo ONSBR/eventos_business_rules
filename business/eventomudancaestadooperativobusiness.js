@@ -5,20 +5,13 @@ const ESTADOS_OPERATIVOS_DESLIGADO_EXCETO_DCO = ['DEM', 'DUR', 'DAU', 'DCA', 'DP
 class EventoMudancaEstadoOperativoBusiness {
 
 
-    aplicarRegrasPre(eventos) {
-        // this.preencherCampoDisponibilidadeVazio(eventos);
-        // this.refletirAlteracaoDeUltimoEventoEmEventoespelho(eventos);
-        // this.refletirAlteracoesQuandoUltimoEventoMesExcluido(eventos);
-        // this.excluirEventosConsecutivosSemelhantes(eventos);
-        // this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
-        // this.verificarEventoDCOAposLig(eventos);
-        // this.verificarPotenciaNegativaOuSuperiorPotencia(eventos);
-        // this.verificarCondicaoOperativa(eventos);
-        // this.verificarClassificacaoOrigem(eventos);
-        // this.verificarCondicaoOperacaoOperativaRPROuRFO(eventos);
-        // this.verificarEstadoOperativoDesligamento(eventos);
-        // this.verificarEventosNaMesmaDataHora(eventos);
-        // this.verificarEventosConsecutivos(eventos);
+    aplicarRegrasPre(eventos, unidadeGeradora) {
+        this.validarAlteracoesDiretasEventosEspelhos(eventos);
+        this.verificarAtributosObrigatorios(eventos);
+        this.verificarPotenciaNegativaOuSuperiorPotencia(unidadeGeradora, eventos);
+        this.verificarCondicaoOperativa(eventos);
+        this.verificarClassificacaoOrigem(eventos);
+        this.verificarCondicaoOperacaoOperativaRPROuRFO(eventos);
     }
 
     aplicarRegrasPos(eventos) {
@@ -27,7 +20,7 @@ class EventoMudancaEstadoOperativoBusiness {
 
     aplicarRegrasCenario(eventos){
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
-        this.excluirEventosConsecutivosSemelhantes(eventos); 
+        this.excluirEventosConsecutivosSem3elhantes(eventos); 
     }
 
     /**
@@ -46,7 +39,8 @@ class EventoMudancaEstadoOperativoBusiness {
         }
 
         let eventosSimultaneosEOC = eventos.filter(evento => {
-            return !this.isEventoEOC(evento) && evento.dataVerificada.getTotalSeconds() == eventosEOC[0].dataVerificada.getTotalSeconds();
+            return !this.isEventoEOC(evento) && 
+                evento.dataVerificada.getTotalSeconds() == eventosEOC[0].dataVerificada.getTotalSeconds();
         });
         
         if (eventosSimultaneosEOC.length == 0) {
@@ -190,6 +184,8 @@ class EventoMudancaEstadoOperativoBusiness {
                     eventos[i].potenciaDisponivel == eventos[i + 1].potenciaDisponivel && !this.isEventoEspelho(eventos[i], eventos[i + 1])) {
                     eventos[i + 1].operacao = 'E';
                 }
+            } else {
+                break;
             }
         }
     }
@@ -200,11 +196,9 @@ class EventoMudancaEstadoOperativoBusiness {
      * @param {EventoMudancaEstadoOperativo[]} eventos
      */
     validarAlteracoesDiretasEventosEspelhos(eventos) {
-        if (eventos.length > 1) {
-            for (let i = 1; i < eventos.length; i++) {
-                if (this.isEventoAlteracao(eventos[i]) && this.isEventoEspelho(eventos[i - 1], eventos[i])) {
-                    throw new Error('Não são permitidas ao ator COSR retificações/revisões diretamente em eventos-espelho (evento zero-hora).');
-                }
+        for (let i = 1; i < eventos.length; i++) {
+            if (this.isEventoAlteracao(eventos[i]) && this.isEventoEspelho(eventos[i - 1], eventos[i])) {
+                throw new Error('Não são permitidas ao ator COSR retificações/revisões diretamente em eventos-espelho (evento zero-hora).');
             }
         }
     }
@@ -294,7 +288,7 @@ class EventoMudancaEstadoOperativoBusiness {
             if (condicoesOperativas.includes(evento.idCondicaoOperativa) && (evento.potenciaDisponivel == undefined ||
                 evento.idClassificacaoOrigem == undefined)) {
                 throw new Error('Não pode haver evento de Mudança de Estado Operativo com Condição Operativa RPR ou RFO e sem' +
-                    ' valor de Disponibilidade, Origem');
+                    ' valor de Disponibilidade ou Origem');
             }
         });
 
