@@ -32,7 +32,7 @@ class EventoMudancaEstadoOperativoBusiness {
 
     aplicarRegrasCenario(eventos){
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
-        this.excluirEventosConsecutivosSem3elhantes(eventos); 
+        // this.excluirEventosConsecutivosSemelhantes(eventos); 
     }
 
     /**
