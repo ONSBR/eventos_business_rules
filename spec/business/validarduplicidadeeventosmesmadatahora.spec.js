@@ -9,24 +9,22 @@ describe('EventoMudancaEstadoOperativoBusiness deve:', function () {
         let dataFevereiro = new Date(2018, 1 , 1);
         let dataMarco = new Date(2018, 2 , 1);
 
-        let eventosComUmEOC = [{ idEstadoOperativo: 'EOC', dataVerificada: dataJaneiro },
-            { idEstadoOperativo: 'LIG', dataVerificada: dataJaneiro },
-            { idEstadoOperativo: 'LCS', dataVerificada: dataFevereiro },
-            { idEstadoOperativo: 'LCC', dataVerificada: dataMarco}];
+        let eventosComUmEOC = [{idEvento: 1, idEstadoOperativo: 'EOC', dataVerificada: dataJaneiro },
+            {idEvento: 2, idEstadoOperativo: 'LIG', dataVerificada: dataJaneiro },
+            {idEvento: 3, idEstadoOperativo: 'LCS', dataVerificada: dataFevereiro },
+            {idEvento: 4, idEstadoOperativo: 'LCC', dataVerificada: dataMarco}];
         eventoMudancaEstadoOperativoBusiness.verificarEventosNaMesmaDataHora(eventosComUmEOC);
 
-        let eventosComEventosSimultaneos = [{ idEstadoOperativo: 'EOC', dataVerificada: dataJaneiro },
-            { idEstadoOperativo: 'LIG', dataVerificada: dataJaneiro },
-            { idEstadoOperativo: 'LCS', dataVerificada: dataJaneiro },
-            { idEstadoOperativo: 'LCC', dataVerificada: dataJaneiro }];
+        let eventosComEventosSimultaneos = [{idEvento: 1, idEstadoOperativo: 'EOC', dataVerificada: dataJaneiro },
+            {idEvento: 2, idEstadoOperativo: 'LIG', dataVerificada: dataJaneiro },
+            {idEvento: 3, idEstadoOperativo: 'LCS', dataVerificada: dataJaneiro },
+            {idEvento: 4, idEstadoOperativo: 'LCS', dataVerificada: dataJaneiro }];
 
         expect(
             () => {
                 eventoMudancaEstadoOperativoBusiness.verificarEventosNaMesmaDataHora(eventosComEventosSimultaneos);
             }
-        ).toThrowError('Não podem existir dois ou mais eventos com a mesma Data/Hora Verificada e mesmo Estágio de Operação' +
-            ' (comissionamento ou operação comercial), exceto no caso de evento de Mudança de Estado Operativo com' +
-            ' Estado Operativo “EOC”.');
+        ).toThrowError();
 
     });
 

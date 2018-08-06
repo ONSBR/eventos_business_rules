@@ -2,7 +2,7 @@ const EventoMudancaEstadoOperativoBusiness = require('../../business/eventomudan
 
 describe('EventoMudancaEstadoOperativoBusiness deve:', function () {
     const MSG_ERRO = 'Não pode haver evento de Mudança de Estado Operativo com Condição Operativa RPR ou RFO e sem' +
-        ' valor de Disponibilidade, Origem';
+        ' valor de Disponibilidade ou Origem';
     let eventoMudancaEstadoOperativoBusiness = new EventoMudancaEstadoOperativoBusiness();
 
     it('Restringir evento estado operativo com condição operativa RPR ou RFO e sem valor de disponibilidade e origem.', () => {

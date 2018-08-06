@@ -4,7 +4,7 @@ const ESTADOS_OPERATIVOS_DESLIGADO_EXCETO_DCO = ['DEM', 'DUR', 'DAU', 'DCA', 'DP
 
 class EventoMudancaEstadoOperativoBusiness {
 
-
+    
     aplicarRegrasPre(eventos, unidadeGeradora) {
         this.validarAlteracoesDiretasEventosEspelhos(eventos);
         this.verificarAtributosObrigatorios(eventos);
@@ -12,10 +12,22 @@ class EventoMudancaEstadoOperativoBusiness {
         this.verificarCondicaoOperativa(eventos);
         this.verificarClassificacaoOrigem(eventos);
         this.verificarCondicaoOperacaoOperativaRPROuRFO(eventos);
+        this.verificarEstadoOperativoDesligamento(eventos);
     }
+    
+    aplicarRegrasPos(eventos, dataset) {
+        this.excluirEventosConsecutivosSemelhantes(eventos);
+        
+        eventos.filter(evento => {
+            return evento.operacao == 'E';
+        }).forEach(eventoParaExcluir => {
+            dataset.eventomudancaestadooperativo.delete(eventoParaExcluir);
+        });
 
-    aplicarRegrasPos(eventos) {
+        this.verificarEventosNaMesmaDataHora(eventos);   
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
+        this.verificarEventoDCOAposLig(eventos);
+        this.verificarEventosConsecutivos(eventos);
     }
 
     aplicarRegrasCenario(eventos){
@@ -311,17 +323,20 @@ class EventoMudancaEstadoOperativoBusiness {
     }
 
     /**
-     * RNR078 - Estado Operativo de desligamento e condição operativa.
+     * RNR079 - Estado Operativo de desligamento e condição operativa.
      * @param {EventoMudancaEstadoOperativo[]} eventos 
      */
     verificarEventosNaMesmaDataHora(eventos) {
         for (let i = 0; i < eventos.length; i++) {
             if (!this.isEventoEOC(eventos[i])) {
                 for (let j = i + 1; j < eventos.length; j++) {
-                    if (eventos[i].dataVerificada.getTotalSeconds() == eventos[j].dataVerificada.getTotalSeconds()) {
-                        throw new Error('Não podem existir dois ou mais eventos com a mesma Data/Hora Verificada e mesmo Estágio de Operação' +
-                            ' (comissionamento ou operação comercial), exceto no caso de evento de Mudança de Estado Operativo com' +
-                            ' Estado Operativo “EOC”.');
+                    if(!this.isEventoEOC(eventos[j])) {
+                        if (eventos[i].dataVerificada.getTotalSeconds() == eventos[j].dataVerificada.getTotalSeconds()
+                                && eventos[i].idEstadoOperativo == eventos[j].idEstadoOperativo) {
+                            throw new Error('Não podem existir dois ou mais eventos com a mesma Data/Hora Verificada e mesmo Estágio de Operação' +
+                                ' (comissionamento ou operação comercial), exceto no caso de evento de Mudança de Estado Operativo com' +
+                                ' Estado Operativo “EOC”.');
+                        }
                     }
                 }
             }
