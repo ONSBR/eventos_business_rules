@@ -12,10 +12,11 @@ class EventoMudancaEstadoOperativoBusiness {
         });
         this.refletirAlteracaoDeUltimoEventoEmEventoespelho(eventosRetificacao, eventosBD, dataset);
         this.refletirAlteracoesQuandoUltimoEventoMesExcluido(eventosRetificacao, eventosBD, dataset);
-        // this.excluirEventosConsecutivosSemelhantes(eventos, dataset);
+        this.excluirEventosConsecutivosSemelhantes(eventosBD, dataset);
     }
 
     aplicarRegrasPos(eventos, unidadeGeradora) {
+        this.excluirEventosConsecutivosSemelhantes(eventos);
         this.verificarAtributosObrigatorios(eventos);
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
         this.verificarPotenciaNegativaOuSuperiorPotencia(unidadeGeradora, eventos);
@@ -206,18 +207,16 @@ class EventoMudancaEstadoOperativoBusiness {
      * origem e disponibilidade, exceto o evento espelho.
      * @param {EventoMudancaEstadoOperativo[]} eventosMudancasEstadosOperativos - array de eventos.
      */
-    excluirEventosConsecutivosSemelhantes(eventos) {
+    excluirEventosConsecutivosSemelhantes(eventos, dataset) {
         for (let i = 0; i < eventos.length; i++) {
-            if (eventos[i + 1] != undefined && !this.isEventoEspelho(eventos[i + 1])) {
+            if (eventos[i + 1] != undefined && (!this.isEventoEspelho(eventos[i]) && !this.isEventoEspelho(eventos[i + 1]))) {
                 if (eventos[i].idEstadoOperativo == eventos[i + 1].idEstadoOperativo &&
                     eventos[i].idCondicaoOperativa == eventos[i + 1].idCondicaoOperativa &&
                     eventos[i].idClassificacaoOrigem == eventos[i + 1].idClassificacaoOrigem &&
                     eventos[i].potenciaDisponivel == eventos[i + 1].potenciaDisponivel) {
-                    eventos[i + 1].operacao = 'E';
+                    dataset.eventomudancaestadooperativo.delete(eventos[i + 1]);
                 }
-            } else {
-                break;
-            }
+            } 
         }
     }
 
@@ -353,7 +352,7 @@ class EventoMudancaEstadoOperativoBusiness {
                             && eventos[i].idEstadoOperativo == eventos[j].idEstadoOperativo) {
                             throw new Error(`Não podem existir dois ou mais eventos com a mesma Data/Hora Verificada e mesmo Estágio de Operação
                                  (comissionamento ou operação comercial), exceto no caso de evento de Mudança de Estado Operativo com
-                                 Estado Operativo “EOC”. ${eventos[i].idEvento} e ${eventos[j].idEvento}`);
+                                 Estado Operativo “EOC”.Eventos ${eventos[i].idEvento} e ${eventos[j].idEvento}`);
                         }
                     }
                 }
@@ -367,7 +366,7 @@ class EventoMudancaEstadoOperativoBusiness {
      */
     verificarEventosConsecutivos(eventos) {
         for (let i = 0; i < eventos.length; i++) {
-            if (!this.isEventoEspelho(eventos[i]) && this.compararEventosConsecutivos(eventos[i - 1], eventos[i])) {
+            if (eventos[i-1] != undefined &&  (!this.isEventoEspelho(eventos[i-1]) && !this.isEventoEspelho(eventos[i])) && this.compararEventosConsecutivos(eventos[i - 1], eventos[i])) {
                 throw new Error(`Não pode haver dois ou mais eventos consecutivos de Mudança de Estado Operativo com os mesmos valores de Estado Operativo, Condição Operativa, Origem e Disponibilidade, exceto no caso do evento espelho.Eventos ${eventos[i - 1].idEvento} e ${eventos[i].idEvento}`);
             }
         }
