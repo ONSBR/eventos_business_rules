@@ -4,6 +4,7 @@ describe('EventoMudancaEstadoOperativoBusiness deve:', function () {
     let eventoMudancaEstadoOperativoBusiness = new EventoMudancaEstadoOperativoBusiness();
     let update = jasmine.createSpy('update');
     let insert = jasmine.createSpy('insert');
+    
     let dataset = {
         eventomudancaestadooperativo: {
             update: update,

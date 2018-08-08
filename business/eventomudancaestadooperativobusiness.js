@@ -10,6 +10,9 @@ class EventoMudancaEstadoOperativoBusiness {
         eventos.forEach(evento => {
             this.preencherCampoDisponibilidadeVazio(evento, unidadeGeradora, dataset);
         });
+        this.refletirAlteracaoDeUltimoEventoEmEventoespelho(eventos, dataset);
+        // this.refletirAlteracoesQuandoUltimoEventoMesExcluido(eventos, dataset);
+        // this.excluirEventosConsecutivosSemelhantes(eventos, dataset);
     }
 
     aplicarRegrasPos(eventos, unidadeGeradora) {
@@ -122,7 +125,7 @@ class EventoMudancaEstadoOperativoBusiness {
      * RNH064 - Reflexão de alteração de último evento em evento espelho
      * @param {EventoMudancaEstadoOperativo[]} eventosMudancasEstadosOperativos - array de eventos.
      */
-    refletirAlteracaoDeUltimoEventoEmEventoespelho(eventos) {
+    refletirAlteracaoDeUltimoEventoEmEventoespelho(eventos, dataset) {
         for (let i = 0; i < eventos.length; i++) {
             if (this.isEventoAlteracao(eventos[i]) && this.isUltimoEventoMes(eventos[i], eventos[i + 1])) {
                 this.refletirAlteracoesParaEventosEspelhos(eventos[i], eventos, i + 1);
@@ -132,7 +135,7 @@ class EventoMudancaEstadoOperativoBusiness {
 
     refletirAlteracoesParaEventosEspelhos(eventoAlterado, eventos, indicePosteriorEventoAlterado) {
         for (let i = indicePosteriorEventoAlterado; i < eventos.length; i++) {
-            if (this.isEventoEspelho(eventos[i - 1], eventos[i])) {
+            if (this.isEventoEspelho(eventos[i])) {
                 eventos[i].idClassificacaoOrigem = eventoAlterado.idClassificacaoOrigem;
                 eventos[i].idEstadoOperativo = eventoAlterado.idEstadoOperativo;
                 eventos[i].idCondicaoOperativa = eventoAlterado.idCondicaoOperativa;
@@ -188,11 +191,11 @@ class EventoMudancaEstadoOperativoBusiness {
      */
     excluirEventosConsecutivosSemelhantes(eventos) {
         for (let i = 0; i < eventos.length; i++) {
-            if (eventos[i + 1] != undefined) {
+            if (eventos[i + 1] != undefined  && !this.isEventoEspelho(eventos[i + 1])) {
                 if (eventos[i].idEstadoOperativo == eventos[i + 1].idEstadoOperativo &&
                     eventos[i].idCondicaoOperativa == eventos[i + 1].idCondicaoOperativa &&
                     eventos[i].idClassificacaoOrigem == eventos[i + 1].idClassificacaoOrigem &&
-                    eventos[i].potenciaDisponivel == eventos[i + 1].potenciaDisponivel && !this.isEventoEspelho(eventos[i], eventos[i + 1])) {
+                    eventos[i].potenciaDisponivel == eventos[i + 1].potenciaDisponivel) {
                     eventos[i + 1].operacao = 'E';
                 }
             } else {
