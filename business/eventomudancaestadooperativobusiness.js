@@ -5,13 +5,13 @@ const ESTADOS_OPERATIVOS_DESLIGADO_EXCETO_DCO = ['DEM', 'DUR', 'DAU', 'DCA', 'DP
 class EventoMudancaEstadoOperativoBusiness {
 
 
-    aplicarRegrasPre(eventos, unidadeGeradora, dataset) {
-        this.validarAlteracoesDiretasEventosEspelhos(eventos);
-        eventos.forEach(evento => {
+    aplicarRegrasPre(eventosRetificacao, eventosBD, unidadeGeradora, dataset) {
+        this.validarAlteracoesDiretasEventosEspelhos(eventosRetificacao);
+        eventosRetificacao.forEach(evento => {
             this.preencherCampoDisponibilidadeVazio(evento, unidadeGeradora, dataset);
         });
-        this.refletirAlteracaoDeUltimoEventoEmEventoespelho(eventos, dataset);
-        // this.refletirAlteracoesQuandoUltimoEventoMesExcluido(eventos, dataset);
+        this.refletirAlteracaoDeUltimoEventoEmEventoespelho(eventosRetificacao, eventosBD, dataset);
+        this.refletirAlteracoesQuandoUltimoEventoMesExcluido(eventosRetificacao, eventosBD, dataset);
         // this.excluirEventosConsecutivosSemelhantes(eventos, dataset);
     }
 
@@ -125,22 +125,27 @@ class EventoMudancaEstadoOperativoBusiness {
      * RNH064 - Reflexão de alteração de último evento em evento espelho
      * @param {EventoMudancaEstadoOperativo[]} eventosMudancasEstadosOperativos - array de eventos.
      */
-    refletirAlteracaoDeUltimoEventoEmEventoespelho(eventos, dataset) {
-        for (let i = 0; i < eventos.length; i++) {
-            if (this.isEventoAlteracao(eventos[i]) && this.isUltimoEventoMes(eventos[i], eventos[i + 1])) {
-                this.refletirAlteracoesParaEventosEspelhos(eventos[i], eventos, i + 1);
+    refletirAlteracaoDeUltimoEventoEmEventoespelho(eventosRetificacao, eventosBD, dataset) {
+        for (let i = 0; i < eventosRetificacao.length; i++) {
+            if (this.isEventoAlteracao(eventosRetificacao[i])) {
+                for (let j = 0; j < eventosBD.length; j++) {
+                    if (eventosRetificacao[i].idEvento == eventosBD[j].idEvento &&
+                        this.isUltimoEventoMes(eventosBD[j], eventosBD[j + 1])) {
+                        this.refletirAlteracoesParaEventosEspelhos(eventosBD[j], eventosBD, j + 1, dataset);
+                    }
+                }
             }
         }
     }
 
-    refletirAlteracoesParaEventosEspelhos(eventoAlterado, eventos, indicePosteriorEventoAlterado) {
+    refletirAlteracoesParaEventosEspelhos(eventoAlterado, eventos, indicePosteriorEventoAlterado, dataset) {
         for (let i = indicePosteriorEventoAlterado; i < eventos.length; i++) {
             if (this.isEventoEspelho(eventos[i])) {
                 eventos[i].idClassificacaoOrigem = eventoAlterado.idClassificacaoOrigem;
                 eventos[i].idEstadoOperativo = eventoAlterado.idEstadoOperativo;
                 eventos[i].idCondicaoOperativa = eventoAlterado.idCondicaoOperativa;
                 eventos[i].potenciaDisponivel = eventoAlterado.potenciaDisponivel;
-                eventos[i].operacao = 'A';
+                dataset.eventomudancaestadooperativo.update(eventos[i]);
             } else {
                 break;
             }
@@ -160,6 +165,10 @@ class EventoMudancaEstadoOperativoBusiness {
     }
 
     isUltimoEventoMes(evento, eventoPosterior) {
+        console.log(eventoPosterior);
+        console.log(evento.dataVerificada.getMonth());
+        console.log(eventoPosterior.dataVerificada.getMonth());
+        
         return eventoPosterior != undefined &&
             evento.dataVerificada.getMonth() != eventoPosterior.dataVerificada.getMonth();
     }
@@ -169,10 +178,18 @@ class EventoMudancaEstadoOperativoBusiness {
      * Caso o evento origem do"Evento-Espelho" seja excluído, ele passará a acompanhar as alterações do ‘novo’ último evento do mês anterior.
      * @param {EventoMudancaEstadoOperativo[]} eventosMudancasEstadosOperativos - array de eventos.
      */
-    refletirAlteracoesQuandoUltimoEventoMesExcluido(eventos) {
-        for (let i = 0; i < eventos.length; i++) {
-            if (this.isEventoExclusao(eventos[i]) && this.isUltimoEventoMes(eventos[i], eventos[i + 1])) {
-                this.refletirAlteracoesParaEventosEspelhos(eventos[i - 1], eventos, i + 1);
+    refletirAlteracoesQuandoUltimoEventoMesExcluido(eventosRetificacao, eventosBD, dataset) {
+        for (let i = 0; i < eventosRetificacao.length; i++) {
+            if (this.isEventoExclusao(eventosRetificacao[i])) {
+                console.log('achou evento exclusao');
+                console.log(eventosRetificacao[i].idEvento);
+                for (let j = 0; j < eventosBD.length; j++) {
+                    
+                    if (eventosRetificacao[i].idEvento == eventosBD[j].idEvento &&
+                        this.isUltimoEventoMes(eventosBD[j], eventosBD[j + 1])) {
+                        this.refletirAlteracoesParaEventosEspelhos(eventosBD[j - 1], eventosBD, j + 1, dataset);
+                    }
+                }
             }
         }
     }
@@ -191,7 +208,7 @@ class EventoMudancaEstadoOperativoBusiness {
      */
     excluirEventosConsecutivosSemelhantes(eventos) {
         for (let i = 0; i < eventos.length; i++) {
-            if (eventos[i + 1] != undefined  && !this.isEventoEspelho(eventos[i + 1])) {
+            if (eventos[i + 1] != undefined && !this.isEventoEspelho(eventos[i + 1])) {
                 if (eventos[i].idEstadoOperativo == eventos[i + 1].idEstadoOperativo &&
                     eventos[i].idCondicaoOperativa == eventos[i + 1].idCondicaoOperativa &&
                     eventos[i].idClassificacaoOrigem == eventos[i + 1].idClassificacaoOrigem &&
@@ -318,8 +335,7 @@ class EventoMudancaEstadoOperativoBusiness {
                 (UtilCalculoParametro.isCampoStringPreenchido(evento.idCondicaoOperativa) ||
                     evento.potenciaDisponivel != 0 ||
                     !UtilCalculoParametro.isCampoStringPreenchido(evento.idClassificacaoOrigem))) {
-                throw new Error('Um evento de Mudança de Estado Operativo com Estado Operativo de Desligamento, exceto “DCO”,' +
-                    ' tem que ter: Condição Operativa em branco, Valor de Disponibilidade igual a zero e Origem preenchida.');
+                throw new Error(`Um evento de Mudança de Estado Operativo com Estado Operativo de Desligamento, exceto “DCO”, tem que ter: Condição Operativa em branco, Valor de Disponibilidade igual a zero e Origem preenchida. Evento: ${evento.idEvento}`);
             }
         });
     }
