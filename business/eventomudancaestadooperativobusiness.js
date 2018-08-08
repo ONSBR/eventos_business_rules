@@ -4,33 +4,28 @@ const ESTADOS_OPERATIVOS_DESLIGADO_EXCETO_DCO = ['DEM', 'DUR', 'DAU', 'DCA', 'DP
 
 class EventoMudancaEstadoOperativoBusiness {
 
-    
-    aplicarRegrasPre(eventos, unidadeGeradora) {
+
+    aplicarRegrasPre(eventos, unidadeGeradora, dataset) {
         this.validarAlteracoesDiretasEventosEspelhos(eventos);
+        eventos.forEach(evento => {
+            this.preencherCampoDisponibilidadeVazio(evento, unidadeGeradora, dataset);
+        });
+    }
+
+    aplicarRegrasPos(eventos, unidadeGeradora) {
         this.verificarAtributosObrigatorios(eventos);
+        this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
         this.verificarPotenciaNegativaOuSuperiorPotencia(unidadeGeradora, eventos);
         this.verificarCondicaoOperativa(eventos);
         this.verificarClassificacaoOrigem(eventos);
         this.verificarCondicaoOperacaoOperativaRPROuRFO(eventos);
         this.verificarEstadoOperativoDesligamento(eventos);
-    }
-    
-    aplicarRegrasPos(eventos, dataset) {
-        this.excluirEventosConsecutivosSemelhantes(eventos);
-        
-        eventos.filter(evento => {
-            return evento.operacao == 'E';
-        }).forEach(eventoParaExcluir => {
-            dataset.eventomudancaestadooperativo.delete(eventoParaExcluir);
-        });
-
-        this.verificarEventosNaMesmaDataHora(eventos);   
-        this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
+        this.verificarEventosNaMesmaDataHora(eventos);
         this.verificarEventoDCOAposLig(eventos);
         this.verificarEventosConsecutivos(eventos);
     }
 
-    aplicarRegrasCenario(eventos){
+    aplicarRegrasCenario(eventos) {
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
         // this.excluirEventosConsecutivosSemelhantes(eventos); 
     }
@@ -51,10 +46,10 @@ class EventoMudancaEstadoOperativoBusiness {
         }
 
         let eventosSimultaneosEOC = eventos.filter(evento => {
-            return !this.isEventoEOC(evento) && 
+            return !this.isEventoEOC(evento) &&
                 evento.dataVerificada.getTotalSeconds() == eventosEOC[0].dataVerificada.getTotalSeconds();
         });
-        
+
         if (eventosSimultaneosEOC.length == 0) {
             throw new Error('Deve existir um evento com a mesma data/hora do evento EOC.');
         }
@@ -72,22 +67,24 @@ class EventoMudancaEstadoOperativoBusiness {
      * sempre preenchida pelo sistema com zero.
      * @param {EventoMudancaEstadoOperativo} evento - Evento de mudança de estado operativo.
      */
-    preencherCampoDisponibilidadeVazio(evento, uge) {
+    preencherCampoDisponibilidadeVazio(evento, uge, dataset) {
         if (!evento.potenciaDisponivel && !this.isEventoExclusao(evento)) {
             const NOR_NOT_TST = ['NOR', 'NOT', 'TST'];
             if (NOR_NOT_TST.includes(evento.idCondicaoOperativa)) {
                 evento.potenciaDisponivel = uge.potenciaDisponivel;
-                this.preencherOperacaoParaAtualizacao(evento);
+                this.atualizaCampoDisponibilidade(evento, dataset);
             } else if (ESTADOS_OPERATIVOS_DESLIGADO_EXCETO_DCO.includes(evento.idEstadoOperativo)) {
                 evento.potenciaDisponivel = 0;
-                this.preencherOperacaoParaAtualizacao(evento);
-            } 
+                this.atualizaCampoDisponibilidade(evento, dataset);
+            }
         }
     }
 
-    preencherOperacaoParaAtualizacao(evento) {
-        if(!evento.operacao) {
-            evento.operacao = 'A';
+    atualizaCampoDisponibilidade(evento, dataset) {
+        if (this.isEventoAlteracao(evento)) {
+            dataset.eventomudancaestadooperativo.update(evento);
+        } else if (this.isEventoInclusao(evento)) {
+            dataset.eventomudancaestadooperativo.insert(evento);
         }
     }
 
@@ -147,14 +144,16 @@ class EventoMudancaEstadoOperativoBusiness {
         }
     }
 
-    isEventoEspelho(eventoAnterior, evento) {
-        return eventoAnterior != undefined &&
-            eventoAnterior.dataVerificada.getMonth() != evento.dataVerificada.getMonth() &&
-            evento.dataVerificada.getDate() == 1 && evento.dataVerificada.getHours() == 0 && evento.dataVerificada.getMinutes() == 0;
+    isEventoEspelho(evento) {
+        return evento.dataVerificada.getDate() == 1 && evento.dataVerificada.getHours() == 0 && evento.dataVerificada.getMinutes() == 0;
     }
 
     isEventoAlteracao(evento) {
         return evento.operacao == 'A';
+    }
+
+    isEventoInclusao(evento) {
+        return evento.operacao == 'I';
     }
 
     isUltimoEventoMes(evento, eventoPosterior) {
@@ -201,16 +200,16 @@ class EventoMudancaEstadoOperativoBusiness {
             }
         }
     }
-    
+
     /**
      * RNR063 - Restrição ao COSR quanto a retificações/revisões diretas em eventos espelho:
      * Não são permitidas ao ator COSR retificações/revisões diretamente em eventos-espelho (evento zero-hora).
      * @param {EventoMudancaEstadoOperativo[]} eventos
      */
     validarAlteracoesDiretasEventosEspelhos(eventos) {
-        for (let i = 1; i < eventos.length; i++) {
-            if (this.isEventoAlteracao(eventos[i]) && this.isEventoEspelho(eventos[i - 1], eventos[i])) {
-                throw new Error('Não são permitidas ao ator COSR retificações/revisões diretamente em eventos-espelho (evento zero-hora).');
+        for (let i = 0; i < eventos.length; i++) {
+            if (this.isEventoAlteracao(eventos[i]) && this.isEventoEspelho(eventos[i])) {
+                throw new Error(`Não são permitidas ao ator COSR retificações/revisões diretamente em eventos-espelho (evento zero-hora). Evento: ${eventos[i].idEvento}`);
             }
         }
     }
@@ -330,12 +329,12 @@ class EventoMudancaEstadoOperativoBusiness {
         for (let i = 0; i < eventos.length; i++) {
             if (!this.isEventoEOC(eventos[i])) {
                 for (let j = i + 1; j < eventos.length; j++) {
-                    if(!this.isEventoEOC(eventos[j])) {
+                    if (!this.isEventoEOC(eventos[j])) {
                         if (eventos[i].dataVerificada.getTotalSeconds() == eventos[j].dataVerificada.getTotalSeconds()
-                                && eventos[i].idEstadoOperativo == eventos[j].idEstadoOperativo) {
-                            throw new Error('Não podem existir dois ou mais eventos com a mesma Data/Hora Verificada e mesmo Estágio de Operação' +
-                                ' (comissionamento ou operação comercial), exceto no caso de evento de Mudança de Estado Operativo com' +
-                                ' Estado Operativo “EOC”.');
+                            && eventos[i].idEstadoOperativo == eventos[j].idEstadoOperativo) {
+                            throw new Error(`Não podem existir dois ou mais eventos com a mesma Data/Hora Verificada e mesmo Estágio de Operação
+                                 (comissionamento ou operação comercial), exceto no caso de evento de Mudança de Estado Operativo com
+                                 Estado Operativo “EOC”. ${eventos[i].idEvento} e ${eventos[j].idEvento}`);
                         }
                     }
                 }
@@ -349,9 +348,8 @@ class EventoMudancaEstadoOperativoBusiness {
      */
     verificarEventosConsecutivos(eventos) {
         for (let i = 0; i < eventos.length; i++) {
-            if (!this.isEventoEspelho(eventos[i - 1], eventos[i]) && this.compararEventosConsecutivos(eventos[i - 1], eventos[i])) {
-                throw new Error('Não pode haver dois ou mais eventos consecutivos de Mudança de Estado Operativo' +
-                    ' com os mesmos valores de Estado Operativo, Condição Operativa, Origem e Disponibilidade, exceto no caso do evento espelho.');
+            if (!this.isEventoEspelho(eventos[i]) && this.compararEventosConsecutivos(eventos[i - 1], eventos[i])) {
+                throw new Error(`Não pode haver dois ou mais eventos consecutivos de Mudança de Estado Operativo com os mesmos valores de Estado Operativo, Condição Operativa, Origem e Disponibilidade, exceto no caso do evento espelho.Eventos ${eventos[i - 1].idEvento} e ${eventos[i].idEvento}`);
             }
         }
     }
