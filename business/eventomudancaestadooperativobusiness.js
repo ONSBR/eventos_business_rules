@@ -31,7 +31,7 @@ class EventoMudancaEstadoOperativoBusiness {
 
     aplicarRegrasCenario(eventos) {
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
-        // this.excluirEventosConsecutivosSemelhantes(eventos); 
+        this.excluirEventosConsecutivosSemelhantes(eventos); 
     }
 
     /**
@@ -114,9 +114,7 @@ class EventoMudancaEstadoOperativoBusiness {
             if (!(eventoAnterior.idCondicaoOperativa == evento.idCondicaoOperativa &&
                 eventoAnterior.idClassificacaoOrigem == evento.idClassificacaoOrigem &&
                 eventoAnterior.potenciaDisponivel == evento.potenciaDisponivel)) {
-                throw new Error('Um evento de Mudança de Estado Operativo com Estado Operativo “DCO” posterior' +
-                    ' a um evento com Estado Operativo “LIG” e Condição Operativa “RFO” ou “RPR” deve ter a mesma Condição Operativa,' +
-                    ' origem e valor de Disponibilidade do evento predecessor, exceto se for Origem “GRE”');
+                throw new Error(`Um evento de Mudança de Estado Operativo com Estado Operativo “DCO” posterior a um evento com Estado Operativo “LIG” e Condição Operativa “RFO” ou “RPR” deve ter a mesma Condição Operativa, origem e valor de Disponibilidade do evento predecessor, exceto se for Origem “GRE”. Eventos ${eventoAnterior.idEvento} e ${evento.idEvento}`);
             }
 
         }
@@ -301,7 +299,7 @@ class EventoMudancaEstadoOperativoBusiness {
             if (estadosOperativos.includes(evento.idEstadoOperativo) &&
                 (evento.idClassificacaoOrigem == undefined || evento.idClassificacaoOrigem == '')) {
                 throw new Error('Não pode haver evento de Mudança de Estado Operativo sem a Origem preenchida quando o estado ' +
-                    'operativo for igual a “DEM”, “DUR”, “DAU”, “DPR”, “DPA” ou “DCA”.');
+                    'operativo for igual a “DEM”, “DUR”, “DAU”, “DPR”, “DPA” ou “DCA”. Evento:' + evento.idEvento);
             }
         });
     }
