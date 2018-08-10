@@ -15,8 +15,8 @@ class EventoMudancaEstadoOperativoBusiness {
         this.excluirEventosConsecutivosSemelhantes(eventosBD, dataset);
     }
 
-    aplicarRegrasPos(eventos, unidadeGeradora) {
-        this.excluirEventosConsecutivosSemelhantes(eventos);
+    aplicarRegrasPos(eventos, unidadeGeradora, dataset) {
+        this.excluirEventosConsecutivosSemelhantes(eventos, dataset);
         this.verificarAtributosObrigatorios(eventos);
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
         this.verificarPotenciaNegativaOuSuperiorPotencia(unidadeGeradora, eventos);
