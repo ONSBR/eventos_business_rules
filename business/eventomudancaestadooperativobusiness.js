@@ -29,9 +29,9 @@ class EventoMudancaEstadoOperativoBusiness {
         this.verificarEventosConsecutivos(eventos);
     }
 
-    aplicarRegrasCenario(eventos) {
+    aplicarRegrasCenario(eventos, dataset) {
         this.verificarUnicidadeEventoEntradaOperacaoComercial(eventos);
-        this.excluirEventosConsecutivosSemelhantes(eventos); 
+        this.excluirEventosConsecutivosSemelhantes(eventos, dataset); 
     }
 
     /**
